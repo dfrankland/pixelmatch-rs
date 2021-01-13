@@ -156,10 +156,10 @@ fn antialiased(
     height: u32,
     img2: &DynamicImage,
 ) -> bool {
-    let x0 = (x1 - 1).max(0);
-    let y0 = (y1 - 1).max(0);
-    let x2 = (x1 + 1).min(width - 1);
-    let y2 = (y1 + 1).min(height - 1);
+    let x0 = x1.saturating_sub(1);
+    let y0 = y1.saturating_sub(1);
+    let x2 = x1.saturating_add(1).min(width - 1);
+    let y2 = y1.saturating_add(1).min(height - 1);
     let mut zeroes: u8 = if x1 == x0 || x1 == x2 || y1 == y0 || y1 == y2 {
         1
     } else {
@@ -220,10 +220,10 @@ fn antialiased(
 
 // check if a pixel has 3+ adjacent pixels of the same color.
 fn has_many_siblings(img: &DynamicImage, x1: u32, y1: u32, width: u32, height: u32) -> bool {
-    let x0 = (x1 - 1).max(0);
-    let y0 = (y1 - 1).max(0);
-    let x2 = (x1 + 1).min(width - 1);
-    let y2 = (y1 + 1).min(height - 1);
+    let x0 = x1.saturating_sub(1);
+    let y0 = y1.saturating_sub(1);
+    let x2 = x1.saturating_add(1).min(width - 1);
+    let y2 = y1.saturating_add(1).min(height - 1);
     let mut zeroes: u8 = if x1 == x0 || x1 == x2 || y1 == y0 || y1 == y2 {
         1
     } else {
