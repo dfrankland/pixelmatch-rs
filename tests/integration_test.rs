@@ -60,7 +60,7 @@ diff_test!(
 );
 diff_test!(
     img_1a,
-    img_1b,
+    img_1a,
     img_1emptydiffmask,
     Some(Options {
         threshold: 0.0,

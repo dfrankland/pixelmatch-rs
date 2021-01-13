@@ -80,11 +80,14 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
 
     // fast path if identical
     if identical {
-        if let (Some(output), Some(img_out), false) = (&mut output, &mut img_out, options.diff_mask)
+        if let (Some(output), Some(img_out)) = (&mut output, &mut img_out)
         {
-            for pixel in img1.pixels() {
-                draw_gray_pixel(&pixel, options.alpha, img_out)?;
+            if !options.diff_mask {
+                for pixel in img1.pixels() {
+                    draw_gray_pixel(&pixel, options.alpha, img_out)?;
+                }
             }
+
             img_out.write_to(*output, ImageOutputFormat::Png)?;
         }
 
