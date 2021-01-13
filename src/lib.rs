@@ -119,7 +119,7 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
             {
                 // one of the pixels is anti-aliasing; draw as yellow and do not count as difference
                 // note that we do not include such pixels in a mask
-                if let Some(img_out) = &mut img_out {
+                if let (Some(img_out), false) = (&mut img_out, options.diff_mask) {
                     img_out.put_pixel(pixel1.0, pixel1.1, Rgba(options.aa_color));
                 }
             } else {
@@ -134,7 +134,8 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
                 }
                 diff += 1;
             }
-        } else if let Some(img_out) = &mut img_out {
+        } else if let (Some(img_out), false) = (&mut img_out, options.diff_mask) {
+            // pixels are similar; draw background as grayscale image blended with white
             draw_gray_pixel(&pixel1, options.alpha, img_out)?;
         }
     }
