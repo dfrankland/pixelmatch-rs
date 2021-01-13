@@ -80,8 +80,7 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
 
     // fast path if identical
     if identical {
-        if let (Some(output), Some(img_out)) = (&mut output, &mut img_out)
-        {
+        if let (Some(output), Some(img_out)) = (&mut output, &mut img_out) {
             if !options.diff_mask {
                 for pixel in img1.pixels() {
                     draw_gray_pixel(&pixel, options.alpha, img_out)?;
@@ -154,21 +153,13 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
 // based on "Anti-aliased Pixel and Intensity Slope Detector" paper by V. Vysniauskas, 2009
 fn antialiased(
     img1: &DynamicImage,
-    x1: u32,
-    y1: u32,
+    x: u32,
+    y: u32,
     width: u32,
     height: u32,
     img2: &DynamicImage,
 ) -> bool {
-    let x0 = x1.saturating_sub(1);
-    let y0 = y1.saturating_sub(1);
-    let x2 = x1.saturating_add(1).min(width - 1);
-    let y2 = y1.saturating_add(1).min(height - 1);
-    let mut zeroes: u8 = if x1 == x0 || x1 == x2 || y1 == y0 || y1 == y2 {
-        1
-    } else {
-        0
-    };
+    let mut zeroes: u8 = 0;
     let mut min = 0.0;
     let mut max = 0.0;
     let mut min_x = 0;
@@ -176,15 +167,25 @@ fn antialiased(
     let mut max_x = 0;
     let mut max_y = 0;
 
-    for x in x0..=x2 {
-        for y in y0..=y2 {
-            if x == x1 && y == y1 {
+    let center_rgba = img1.get_pixel(x, y);
+
+    for relative_x in -1_i32..=1 {
+        for relative_y in -1_i32..=1 {
+            if relative_x == 0 && relative_y == 0 {
                 continue;
             }
 
             // brightness delta between the center pixel and adjacent one
-            let rgba = img1.get_pixel(x, y);
-            let delta = color_delta(&rgba, &rgba, true);
+            let adjacent_x = (x as i32)
+                .saturating_add(relative_x)
+                .max(0)
+                .min(width as i32 - 1) as u32;
+            let adjacent_y = (y as i32)
+                .saturating_add(relative_y)
+                .max(0)
+                .min(height as i32 - 1) as u32;
+            let rgba = img1.get_pixel(adjacent_x, adjacent_y);
+            let delta = color_delta(&center_rgba, &rgba, true);
 
             // count the number of equal, darker and brighter adjacent pixels
             if delta == 0.0 {
@@ -194,17 +195,23 @@ fn antialiased(
                     return false;
                 }
 
+                continue;
+            }
+
             // remember the darkest pixel
-            } else if delta < min {
+            if delta < min {
                 min = delta;
-                min_x = x;
-                min_y = y;
+                min_x = adjacent_x;
+                min_y = adjacent_y;
+
+                continue;
+            }
 
             // remember the brightest pixel
-            } else if delta > max {
+            if delta > max {
                 max = delta;
-                max_x = x;
-                max_y = y;
+                max_x = adjacent_x;
+                max_y = adjacent_y;
             }
         }
     }
@@ -223,28 +230,28 @@ fn antialiased(
 }
 
 // check if a pixel has 3+ adjacent pixels of the same color.
-fn has_many_siblings(img: &DynamicImage, x1: u32, y1: u32, width: u32, height: u32) -> bool {
-    let x0 = x1.saturating_sub(1);
-    let y0 = y1.saturating_sub(1);
-    let x2 = x1.saturating_add(1).min(width - 1);
-    let y2 = y1.saturating_add(1).min(height - 1);
-    let mut zeroes: u8 = if x1 == x0 || x1 == x2 || y1 == y0 || y1 == y2 {
-        1
-    } else {
-        0
-    };
+fn has_many_siblings(img: &DynamicImage, x: u32, y: u32, width: u32, height: u32) -> bool {
+    let mut zeroes: u8 = 0;
 
-    // go through 8 adjacent pixels
-    let rgba1 = img.get_pixel(x1, y1);
-    for x in x0..=x2 {
-        for y in y0..=y2 {
-            if x == x1 && y == y1 {
+    let center_rgba = img.get_pixel(x, y);
+
+    for relative_x in -1_i32..=1 {
+        for relative_y in -1_i32..=1 {
+            if relative_x == 0 && relative_y == 0 {
                 continue;
             }
 
-            let rgba2 = img.get_pixel(x, y);
+            let adjacent_x = (x as i32)
+                .saturating_add(relative_x)
+                .max(0)
+                .min(width as i32 - 1) as u32;
+            let adjacent_y = (y as i32)
+                .saturating_add(relative_y)
+                .max(0)
+                .min(height as i32 - 1) as u32;
+            let rgba = img.get_pixel(adjacent_x, adjacent_y);
 
-            if rgba1 == rgba2 {
+            if center_rgba == rgba {
                 zeroes += 1;
             }
 
