@@ -68,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(options),
     )?;
 
-    println!("matched in {}", now.elapsed().as_micros());
+    println!("matched in: {}ms", now.elapsed().as_millis());
 
     println!("different pixels: {}", diffs);
 
