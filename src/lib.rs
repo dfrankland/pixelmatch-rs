@@ -100,6 +100,7 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
 
     for (pixel1, pixel2) in img1.pixels().zip(img2.pixels()) {
         let delta = color_delta(&pixel1.2, &pixel2.2, false);
+
         if delta.abs() > max_delta {
             // check it's a real rendering difference or just anti-aliasing
             if !options.include_aa
@@ -159,9 +160,15 @@ fn antialiased(
     height: u32,
     img2: &DynamicImage,
 ) -> bool {
-    let mut zeroes: u8 = 0;
+    let mut zeroes: u8 = if x == 0 || y == 0 || x == width - 1 || y == height - 1 {
+        1
+    } else {
+        0
+    };
+
     let mut min = 0.0;
     let mut max = 0.0;
+
     let mut min_x = 0;
     let mut min_y = 0;
     let mut max_x = 0;
@@ -169,27 +176,21 @@ fn antialiased(
 
     let center_rgba = img1.get_pixel(x, y);
 
-    for relative_x in -1_i32..=1 {
-        for relative_y in -1_i32..=1 {
-            if relative_x == 0 && relative_y == 0 {
+    for adjacent_x in (if x > 0 { x - 1 } else { x })..=(if x < width - 1 { x + 1 } else { x }) {
+        for adjacent_y in (if y > 0 { y - 1 } else { y })..=(if y < height - 1 { y + 1 } else { y })
+        {
+            if adjacent_x == x && adjacent_y == y {
                 continue;
             }
 
             // brightness delta between the center pixel and adjacent one
-            let adjacent_x = (x as i32)
-                .saturating_add(relative_x)
-                .max(0)
-                .min(width as i32 - 1) as u32;
-            let adjacent_y = (y as i32)
-                .saturating_add(relative_y)
-                .max(0)
-                .min(height as i32 - 1) as u32;
             let rgba = img1.get_pixel(adjacent_x, adjacent_y);
             let delta = color_delta(&center_rgba, &rgba, true);
 
             // count the number of equal, darker and brighter adjacent pixels
             if delta == 0.0 {
                 zeroes += 1;
+
                 // if found more than 2 equal siblings, it's definitely not anti-aliasing
                 if zeroes > 2 {
                     return false;
@@ -231,24 +232,21 @@ fn antialiased(
 
 // check if a pixel has 3+ adjacent pixels of the same color.
 fn has_many_siblings(img: &DynamicImage, x: u32, y: u32, width: u32, height: u32) -> bool {
-    let mut zeroes: u8 = 0;
+    let mut zeroes: u8 = if x == 0 || y == 0 || x == width - 1 || y == height - 1 {
+        1
+    } else {
+        0
+    };
 
     let center_rgba = img.get_pixel(x, y);
 
-    for relative_x in -1_i32..=1 {
-        for relative_y in -1_i32..=1 {
-            if relative_x == 0 && relative_y == 0 {
+    for adjacent_x in (if x > 0 { x - 1 } else { x })..=(if x < width - 1 { x + 1 } else { x }) {
+        for adjacent_y in (if y > 0 { y - 1 } else { y })..=(if y < height - 1 { y + 1 } else { y })
+        {
+            if adjacent_x == x && adjacent_y == y {
                 continue;
             }
 
-            let adjacent_x = (x as i32)
-                .saturating_add(relative_x)
-                .max(0)
-                .min(width as i32 - 1) as u32;
-            let adjacent_y = (y as i32)
-                .saturating_add(relative_y)
-                .max(0)
-                .min(height as i32 - 1) as u32;
             let rgba = img.get_pixel(adjacent_x, adjacent_y);
 
             if center_rgba == rgba {
