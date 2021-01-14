@@ -1,3 +1,4 @@
+use core::f64;
 use image::{
     codecs::png::PngDecoder, DynamicImage, GenericImage, GenericImageView, ImageOutputFormat, Rgba,
 };
@@ -275,7 +276,11 @@ fn color_delta(rgba1: &Rgba<u8>, rgba2: &Rgba<u8>, y_only: bool) -> f64 {
     let mut b2 = rgba2[2] as f64;
     let mut a2 = rgba2[3] as f64;
 
-    if a1 == a2 && r1 == r2 && g1 == g2 && b1 == b2 {
+    if (a1 - a2).abs() < f64::EPSILON
+        && (r1 - r2).abs() < f64::EPSILON
+        && (g1 - g2).abs() < f64::EPSILON
+        && (b1 - b2).abs() < f64::EPSILON
+    {
         return 0.0;
     }
 
