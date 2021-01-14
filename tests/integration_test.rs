@@ -153,11 +153,11 @@ diff_test!(
 
 #[test]
 fn throws_error_if_image_sizes_do_not_match() {
-    let img1: &[u8] = &[0; 8];
-    let img2: &[u8] = &[0; 9];
+    let img1: &[u8] = include_bytes!("fixtures/img_1a.png");
+    let img2: &[u8] = include_bytes!("fixtures/img_2a.png");
     let output: Option<&mut Vec<u8>> = None;
     assert_eq!(
         pixelmatch(img1, img2, output, Some(2), Some(1), None).map_err(|err| err.to_string()),
-        Err(String::from("Image sizes do not match"))
+        Err(String::from("Image sizes do not match."))
     );
 }
