@@ -259,7 +259,7 @@ fn has_many_siblings(img: &DynamicImage, x: u32, y: u32, width: u32, height: u32
         }
     }
 
-    return false;
+    false
 }
 
 // calculate color difference according to the paper "Measuring perceived color difference
