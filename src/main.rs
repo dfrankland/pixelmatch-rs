@@ -20,7 +20,7 @@ struct Opt {
 
     /// Threshold
     #[structopt(short, long)]
-    threshold: Option<f32>,
+    threshold: Option<f64>,
 
     /// Include antialiasing
     #[structopt(short, long)]
@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!(
         "error: {}%",
-        ((100.0 * 100.0 * diffs as f32) / (width1 as f32 * height1 as f32)).round() / 100.0
+        ((100.0 * 100.0 * diffs as f64) / (width1 as f64 * height1 as f64)).round() / 100.0
     );
 
     if let Some(diff_path) = opt.diff_path {

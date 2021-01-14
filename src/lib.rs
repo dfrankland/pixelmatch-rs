@@ -5,11 +5,11 @@ use std::io::{Read, Write};
 
 pub struct Options {
     /// matching threshold (0 to 1); smaller is more sensitive
-    pub threshold: f32,
+    pub threshold: f64,
     /// whether to skip anti-aliasing detection
     pub include_aa: bool,
     /// opacity of original image in diff output
-    pub alpha: f32,
+    pub alpha: f64,
     /// color of anti-aliased pixels in diff output
     pub aa_color: [u8; 4],
     /// color of different pixels in diff output
@@ -95,7 +95,7 @@ pub fn pixelmatch<IMG1: Read, IMG2: Read, OUT: Write>(
 
     // maximum acceptable square distance between two colors;
     // 35215 is the maximum possible value for the YIQ difference metric
-    let max_delta = 35215_f32 * options.threshold * options.threshold;
+    let max_delta = 35215_f64 * options.threshold * options.threshold;
     let mut diff: usize = 0;
 
     for (pixel1, pixel2) in img1.pixels().zip(img2.pixels()) {
@@ -264,16 +264,16 @@ fn has_many_siblings(img: &DynamicImage, x: u32, y: u32, width: u32, height: u32
 
 // calculate color difference according to the paper "Measuring perceived color difference
 // using YIQ NTSC transmission color space in mobile applications" by Y. Kotsarenko and F. Ramos
-fn color_delta(rgba1: &Rgba<u8>, rgba2: &Rgba<u8>, y_only: bool) -> f32 {
-    let mut r1 = rgba1[0] as f32;
-    let mut g1 = rgba1[1] as f32;
-    let mut b1 = rgba1[2] as f32;
-    let mut a1 = rgba1[3] as f32;
+fn color_delta(rgba1: &Rgba<u8>, rgba2: &Rgba<u8>, y_only: bool) -> f64 {
+    let mut r1 = rgba1[0] as f64;
+    let mut g1 = rgba1[1] as f64;
+    let mut b1 = rgba1[2] as f64;
+    let mut a1 = rgba1[3] as f64;
 
-    let mut r2 = rgba2[0] as f32;
-    let mut g2 = rgba2[1] as f32;
-    let mut b2 = rgba2[2] as f32;
-    let mut a2 = rgba2[3] as f32;
+    let mut r2 = rgba2[0] as f64;
+    let mut g2 = rgba2[1] as f64;
+    let mut b2 = rgba2[2] as f64;
+    let mut a2 = rgba2[3] as f64;
 
     if a1 == a2 && r1 == r2 && g1 == g2 && b1 == b2 {
         return 0.0;
@@ -317,7 +317,7 @@ fn color_delta(rgba1: &Rgba<u8>, rgba2: &Rgba<u8>, y_only: bool) -> f32 {
 
 fn draw_gray_pixel(
     (x, y, rgba): &(u32, u32, Rgba<u8>),
-    alpha: f32,
+    alpha: f64,
     output: &mut DynamicImage,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if !output.in_bounds(*x, *y) {
@@ -328,7 +328,7 @@ fn draw_gray_pixel(
 
     let val = blend(
         rgb2y(rgba[0], rgba[1], rgba[2]),
-        (alpha * rgba[3] as f32) / 255.0,
+        (alpha * rgba[3] as f64) / 255.0,
     ) as u8;
     let gray_rgba = Rgba([val, val, val, val]);
     output.put_pixel(*x, *y, gray_rgba);
@@ -337,16 +337,16 @@ fn draw_gray_pixel(
 }
 
 // blend semi-transparent color with white
-fn blend<T: Into<f32>>(c: T, a: T) -> f32 {
+fn blend<T: Into<f64>>(c: T, a: T) -> f64 {
     255.0 + (c.into() - 255.0) * a.into()
 }
 
-fn rgb2y<T: Into<f32>>(r: T, g: T, b: T) -> f32 {
+fn rgb2y<T: Into<f64>>(r: T, g: T, b: T) -> f64 {
     r.into() * 0.29889531 + g.into() * 0.58662247 + b.into() * 0.11448223
 }
-fn rgb2i<T: Into<f32>>(r: T, g: T, b: T) -> f32 {
+fn rgb2i<T: Into<f64>>(r: T, g: T, b: T) -> f64 {
     r.into() * 0.59597799 - g.into() * 0.27417610 - b.into() * 0.32180189
 }
-fn rgb2q<T: Into<f32>>(r: T, g: T, b: T) -> f32 {
+fn rgb2q<T: Into<f64>>(r: T, g: T, b: T) -> f64 {
     r.into() * 0.21147017 - g.into() * 0.52261711 + b.into() * 0.31114694
 }
