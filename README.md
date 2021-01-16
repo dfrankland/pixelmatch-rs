@@ -6,7 +6,7 @@ Completely based on [`pixelmatch`][].
 
 [`pixelmatch`]: https://github.com/mapbox/pixelmatch
 
-```rs
+```rust
 let num_diff_pixels = pixelmatch(
     im1,
     img2,
